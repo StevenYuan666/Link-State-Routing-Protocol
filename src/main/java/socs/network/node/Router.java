@@ -120,12 +120,14 @@ public class Router {
     try {
       // Setup the socket used for communication and corresponding input and output
       Socket clientSocket = new Socket(processIP, processPort);
-      DataOutputStream outputStream = new DataOutputStream(clientSocket.getOutputStream());
-      DataInputStream inputStream = new DataInputStream(clientSocket.getInputStream());
+      ObjectOutputStream outputStream = new ObjectOutputStream(clientSocket.getOutputStream());
+      ObjectInputStream inputStream = new ObjectInputStream(clientSocket.getInputStream());
 
-      // Prompt some guidance for the router to be attached
-      outputStream.writeUTF(this.rd.simulatedIPAddress);
-      String option = inputStream.readUTF();
+      // Forward some information for the router to be attached
+      outputStream.writeObject(this.rd.simulatedIPAddress);
+      // Also forward the port number since the server will add corresponding link to its ports array
+      outputStream.writeObject(this.rd.processPortNumber);
+      String option = (String) inputStream.readObject();
       // If the desired router accept the request, add the link to ports array
       if (option.equals("1")){
         System.out.println("Your attach request has been accepted;");
