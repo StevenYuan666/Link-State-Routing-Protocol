@@ -1,10 +1,15 @@
 package socs.network.node;
 
+import socs.network.message.LSA;
+import socs.network.message.LinkDescription;
+import socs.network.message.SOSPFPacket;
 import socs.network.util.Configuration;
 
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.LinkedList;
+import java.util.Vector;
 
 
 public class Router {
@@ -20,6 +25,9 @@ public class Router {
 
   // Need a signal to read input (Y/N) from the main thread
   volatile int signal = -1;
+
+  // A flag to denote whether the router has started or not
+  boolean started = false;
 
   public Router(Configuration config) {
     // Initialize the router config
@@ -127,11 +135,13 @@ public class Router {
       outputStream.writeObject(this.rd.simulatedIPAddress);
       // Also forward the port number since the server will add corresponding link to its ports array
       outputStream.writeObject(this.rd.processPortNumber);
+      // Also forward the weight of the link
+      outputStream.writeObject(weight);
       String option = (String) inputStream.readObject();
       // If the desired router accept the request, add the link to ports array
       if (option.equals("1")){
         System.out.println("Your attach request has been accepted;");
-        this.ports[available_port] = new Link(this.rd, toBeAttached);
+        this.ports[available_port] = new Link(this.rd, toBeAttached, weight);
       }
       // Otherwise, do nothing
       else{
@@ -171,7 +181,162 @@ public class Router {
    * broadcast Hello to neighbors
    */
   private void processStart() {
+    // Check if the ports array is empty
+    boolean empty = true;
+    for (Link l : ports){
+      empty = empty && (l == null);
+    }
+    if (empty){
+      System.err.println("You have started but not connected to any other routers");
+    }
 
+    // change the flag to denote the router has started
+    started = true;
+
+    // Send Hello to every routers in the ports array
+    for (Link l : ports){
+      // Check if the link is null
+      if (l == null){
+        continue;
+      }
+
+      // Broadcast HELLO to all routers in ports array
+      try{
+        // Build socket connection
+        String processIP = l.router2.processIPAddress;
+        short processPort = l.router2.processPortNumber;
+        Socket clientSocket = new Socket(processIP, processPort);
+        ObjectOutputStream outputStream = new ObjectOutputStream(clientSocket.getOutputStream());
+        ObjectInputStream inputStream = new ObjectInputStream(clientSocket.getInputStream());
+
+        // Set up the HELLO packet
+        SOSPFPacket hello = new SOSPFPacket();
+        hello.srcProcessIP = this.rd.processIPAddress;
+        hello.srcProcessPort = this.rd.processPortNumber;
+        hello.srcIP = this.rd.simulatedIPAddress;
+        hello.dstIP = l.router2.simulatedIPAddress;
+        hello.sospfType = 0; // That is a HELLO PACKET
+        hello.routerID = hello.srcIP; // According to the explanation of TA on myCourses
+        hello.neighborID = hello.dstIP;
+
+        // send HELLO packet
+        outputStream.writeObject(hello);
+
+        // wait for the reply HELLO packet
+        Object reply = inputStream.readObject();
+        if (reply instanceof SOSPFPacket){
+          SOSPFPacket helloBack = (SOSPFPacket) reply;
+          // Check if the received packet is a HELLO packet
+          if (helloBack.sospfType != 0){
+            System.err.println("DID NOT RECEIVE HELLO BACK");
+          }
+          else{
+            // Display the log and change the corresponding status
+            System.out.println("received HELLO from " + helloBack.srcIP + ";");
+            l.router1.status = RouterStatus.TWO_WAY;
+            l.router2.status = RouterStatus.TWO_WAY;
+            System.out.println("set " + helloBack.srcIP + " state to TWO_WAY;");
+            // Send HELLO back again to inform the other router
+            outputStream.writeObject(hello);
+
+            // Do the synchronization
+            synchronize();
+          }
+        }
+        else{
+          System.err.println("RECEIVED WRONG FORMAT OF REPLY!");
+        }
+
+        // Close all the socket and streams
+        clientSocket.close();
+        inputStream.close();
+        outputStream.close();
+      }
+      catch (Exception e){
+        throw new RuntimeException(e);
+      }
+    }
+
+  }
+
+  // This is the helper function for synchronization process, which will be used by START, CONNECT, DISCONNECT, QUIT
+  public void synchronize() throws IOException {
+    // Construct a LSA for current router first
+    LSA lsa = new LSA();
+    lsa.linkStateID = this.rd.simulatedIPAddress;
+    // Check if this is the first LSA
+    if (lsd._store.get(this.rd.simulatedIPAddress).lsaSeqNumber == Integer.MIN_VALUE){
+      lsa.lsaSeqNumber = 0;
+    }
+    else{
+      int last = lsd._store.get(this.rd.simulatedIPAddress).lsaSeqNumber;
+      lsa.lsaSeqNumber = last + 1;
+    }
+    // create link descriptions for each link
+    LinkedList<LinkDescription> links = new LinkedList<LinkDescription>();
+    for (Link p : ports){
+      if (p != null && p.router2.status != null){
+        LinkDescription description = new LinkDescription();
+        description.linkID = p.router2.simulatedIPAddress;
+        description.portNum = p.router2.processPortNumber;
+        description.tosMetrics = p.weight;
+        links.add(description);
+      }
+    }
+    lsa.links = links;
+
+    // Update the LinkStateDatabase
+    lsd._store.put(lsa.linkStateID, lsa);
+
+    // Send LSAUPATE to all connected routers
+    for (Link l : ports){
+      if (l == null){
+        continue;
+      }
+      String processIP = l.router2.processIPAddress;
+      short processPort = l.router2.processPortNumber;
+      Socket clientSocket = new Socket(processIP, processPort);
+      ObjectOutputStream outputStream = new ObjectOutputStream(clientSocket.getOutputStream());
+
+      // Create a LSAUPATE packet
+      SOSPFPacket update = new SOSPFPacket();
+      update.srcProcessIP = this.rd.processIPAddress;
+      update.srcProcessPort = this.rd.processPortNumber;
+      update.srcIP = this.rd.simulatedIPAddress;
+      update.dstIP = l.router2.simulatedIPAddress;
+      update.sospfType = 1; // That is a LSAUPDATE PACKET
+      update.routerID = update.srcIP; // According to the explanation of TA on myCourses
+      update.neighborID = update.dstIP;
+      Vector<LSA> v = new Vector<LSA>();
+      v.add(lsa);
+      update.lsaArray = v;
+
+      // Broadcast the packet
+      outputStream.writeObject(update);
+
+      // Close all the socket and streams
+//      clientSocket.close();
+//      outputStream.close();
+    }
+  }
+
+  public void synchronize(SOSPFPacket packet) throws IOException {
+    //forward packet to all non-null ports
+    for (Link l : ports) {
+      if (l != null) {
+
+        Socket clientSocket = new Socket(l.router2.processIPAddress, l.router2.processPortNumber);
+
+        ObjectOutputStream outputStream = new ObjectOutputStream(clientSocket.getOutputStream());
+
+        //broadcast the LSAUPDATE packet
+        outputStream.writeObject(packet);
+
+        // Close all the socket and streams
+//        clientSocket.close();
+//        outputStream.close();
+      }
+    }
   }
 
   /**
