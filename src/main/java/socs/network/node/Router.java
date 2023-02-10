@@ -355,7 +355,30 @@ public class Router {
    * output the neighbors of the routers
    */
   private void processNeighbors() {
-    System.out.println("NEIGHBORS");
+    // Check if the ports array is empty
+    boolean empty = true;
+    for (Link l : ports){
+      empty = empty && (l == null);
+    }
+    if (empty){
+      System.err.println("There is no neighbors;");
+    }
+    else{
+      // check if there is attached router but the links have not been set up
+      boolean ifAttached = true;
+      int neighbor = 1;
+      for (Link l : ports){
+        if (l != null && l.router2.status == RouterStatus.TWO_WAY){
+          ifAttached = false;
+          System.out.println("IP address of neighbor" + neighbor + ": " + l.router2.simulatedIPAddress);
+        }
+      }
+      if (ifAttached){
+        System.err.println("You have attached to other routers but not started yet;");
+      }
+    }
+
+
   }
 
   /**
