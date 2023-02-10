@@ -57,9 +57,9 @@ public class RequestHandler extends Thread{
             }
 
             // Close all the socket and streams
-//            socket.close();
-//            inputStream.close();
-//            outputStream.close();
+            socket.close();
+            inputStream.close();
+            outputStream.close();
 
 
         } catch (IOException e) {
