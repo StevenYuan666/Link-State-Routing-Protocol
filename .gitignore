@@ -1,0 +1,15 @@
+
+.idea/.name
+.idea/compiler.xml
+.idea/jarRepositories.xml
+.idea/libraries/Maven__ch_qos_logback_logback_classic_1_1_2.xml
+.idea/libraries/Maven__ch_qos_logback_logback_core_1_1_2.xml
+.idea/libraries/Maven__com_typesafe_config_1_3_1.xml
+.idea/libraries/Maven__junit_junit_4_11.xml
+.idea/libraries/Maven__org_hamcrest_hamcrest_core_1_3.xml
+.idea/libraries/Maven__org_slf4j_slf4j_api_1_7_6.xml
+.idea/misc.xml
+.idea/modules.xml
+.idea/vcs.xml
+*.iml
+*.xml
