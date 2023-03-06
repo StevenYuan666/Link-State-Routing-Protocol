@@ -68,7 +68,8 @@ public class Router {
    * @param destinationIP the ip adderss of the destination simulated router
    */
   private void processDetect(String destinationIP) {
-
+    String path = this.lsd.getShortestPath(destinationIP);
+    System.out.println(path);
   }
 
   /**
@@ -371,6 +372,7 @@ public class Router {
         if (l != null && l.router2.status == RouterStatus.TWO_WAY){
           ifAttached = false;
           System.out.println("IP address of neighbor" + neighbor + ": " + l.router2.simulatedIPAddress);
+          neighbor ++;
         }
       }
       if (ifAttached){
