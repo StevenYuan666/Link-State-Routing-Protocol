@@ -1,7 +1,5 @@
 # Link-State-Routing-Protocol
 
-## Programming Assignment1
-
 ### Overall Design
 
 **To give a detailed description of our implementation in programming assignment 1, we would like to explain the high-level design first, then elaborate on our implementation choice for each command and give a toy example last.**
@@ -9,6 +7,142 @@
 ![overall_design](./overall_design.png)
 
 In our implementation, each Router process has several threads to handle concurrent requests from other routers. The main thread(the command line terminal) is responsible for handling different functionalities, such as attach, start, and neighbors for the router. On top of the main thread, there is a concurrent child thread to listen to the requests from other routers, and each time it hears from another router, a child thread is created to handle that request, as shown in the picture above.
+
+### Install Requirements
+
+#### Java Version
+
+1. Go to [Java](https://www.oracle.com/ca-en/java/technologies/downloads/) to download the specified version below
+
+```bash
+>> java -version
+java version "1.8.0_361"
+Java(TM) SE Runtime Environment (build 1.8.0_361-b09)
+Java HotSpot(TM) 64-Bit Server VM (build 25.361-b09, mixed mode)
+```
+
+#### Maven Version
+
+1. Go to [Maven](https://maven.apache.org/download.cgi) to download the specified version below.
+
+2. Set the environment variables
+
+```bash
+>> export M2_HOME="/Users/stevenyuan/apache-maven-3.8.7"
+>> PATH="${M2_HOME}/bin:${PATH}"
+>> export PATH
+```
+
+```bash
+>> mvn -version
+Apache Maven 3.8.7 (b89d5959fcde851dcb1c8946a785a163f14e1e29)
+Maven home: /Users/stevenyuan/apache-maven-3.8.7
+Java version: 1.8.0_361, vendor: Oracle Corporation, runtime: /Library/Java/JavaVirtualMachines/jdk1.8.0_361.jdk/Contents/Home/jre
+Default locale: en_CA, platform encoding: UTF-8
+OS name: "mac os x", version: "13.2.1", arch: "x86_64", family: "mac"
+```
+
+#### Compile the project
+
+```bash
+>> mvn compile
+[INFO] Scanning for projects...
+[INFO]
+[INFO] --------------------------< groupId:COMP535 >---------------------------
+[INFO] Building COMP535 1.0-SNAPSHOT
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO]
+[INFO] --- maven-resources-plugin:2.6:resources (default-resources) @ COMP535 ---
+[WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+[INFO] Copying 0 resource
+[INFO]
+[INFO] --- maven-compiler-plugin:3.1:compile (default-compile) @ COMP535 ---
+[INFO] Changes detected - recompiling the module!
+[WARNING] File encoding has not been set, using platform encoding UTF-8, i.e. build is platform dependent!
+[INFO] Compiling 11 source files to /Users/stevenyuan/Library/CloudStorage/OneDrive-McGillUniversity/phd-1/COMP535/Link-State-Routing-Protocol/target/classes
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  1.500 s
+[INFO] Finished at: 2023-03-05T21:04:53-05:00
+[INFO] ------------------------------------------------------------------------
+>> mvn compile assembly:single
+[INFO] Scanning for projects...
+[INFO]
+[INFO] --------------------------< groupId:COMP535 >---------------------------
+[INFO] Building COMP535 1.0-SNAPSHOT
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO]
+[INFO] --- maven-resources-plugin:2.6:resources (default-resources) @ COMP535 ---
+[WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+[INFO] Copying 0 resource
+[INFO]
+[INFO] --- maven-compiler-plugin:3.1:compile (default-compile) @ COMP535 ---
+[INFO] Changes detected - recompiling the module!
+[WARNING] File encoding has not been set, using platform encoding UTF-8, i.e. build is platform dependent!
+[INFO] Compiling 11 source files to /Users/stevenyuan/Library/CloudStorage/OneDrive-McGillUniversity/phd-1/COMP535/Link-State-Routing-Protocol/target/classes
+[INFO]
+[INFO] --- maven-assembly-plugin:2.2-beta-5:single (default-cli) @ COMP535 ---
+[INFO] META-INF/MANIFEST.MF already added, skipping
+[INFO] META-INF/ already added, skipping
+[INFO] META-INF/MANIFEST.MF already added, skipping
+[INFO] org/ already added, skipping
+[INFO] LICENSE.txt already added, skipping
+[INFO] META-INF/ already added, skipping
+[INFO] META-INF/MANIFEST.MF already added, skipping
+[INFO] org/ already added, skipping
+[INFO] META-INF/ already added, skipping
+[INFO] META-INF/MANIFEST.MF already added, skipping
+[INFO] ch/ already added, skipping
+[INFO] ch/qos/ already added, skipping
+[INFO] ch/qos/logback/ already added, skipping
+[INFO] META-INF/maven/ already added, skipping
+[INFO] META-INF/maven/ch.qos.logback/ already added, skipping
+[INFO] META-INF/ already added, skipping
+[INFO] META-INF/MANIFEST.MF already added, skipping
+[INFO] org/ already added, skipping
+[INFO] org/slf4j/ already added, skipping
+[INFO] META-INF/maven/ already added, skipping
+[INFO] Building jar: /Users/stevenyuan/Library/CloudStorage/OneDrive-McGillUniversity/phd-1/COMP535/Link-State-Routing-Protocol/target/COMP535-1.0-SNAPSHOT-jar-with-dependencies.jar
+[INFO] META-INF/MANIFEST.MF already added, skipping
+[INFO] META-INF/ already added, skipping
+[INFO] META-INF/MANIFEST.MF already added, skipping
+[INFO] org/ already added, skipping
+[INFO] LICENSE.txt already added, skipping
+[INFO] META-INF/ already added, skipping
+[INFO] META-INF/MANIFEST.MF already added, skipping
+[INFO] org/ already added, skipping
+[INFO] META-INF/ already added, skipping
+[INFO] META-INF/MANIFEST.MF already added, skipping
+[INFO] ch/ already added, skipping
+[INFO] ch/qos/ already added, skipping
+[INFO] ch/qos/logback/ already added, skipping
+[INFO] META-INF/maven/ already added, skipping
+[INFO] META-INF/maven/ch.qos.logback/ already added, skipping
+[INFO] META-INF/ already added, skipping
+[INFO] META-INF/MANIFEST.MF already added, skipping
+[INFO] org/ already added, skipping
+[INFO] org/slf4j/ already added, skipping
+[INFO] META-INF/maven/ already added, skipping
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  2.672 s
+[INFO] Finished at: 2023-03-05T21:09:22-05:00
+[INFO] ------------------------------------------------------------------------
+```
+
+#### Run a router
+
+Change the configuration file to the one you want to run
+
+```bash
+>> java -cp target/COMP535-1.0-SNAPSHOT-jar-with-dependencies.jar socs.network.Main conf/router1.conf
+```
+
+
+
+## Milestone 1
 
 ### Implementation Choice for Each Command
 
@@ -96,3 +230,56 @@ The toy example in the following shows how three routers are connected to each o
 
 
 
+## Milestone 2
+
+### Implementation Choice for Each Command
+
+#### *detect*
+
+We implemented Dijkstra's algorithm to calculate the most efficient path (i.e., the path with the smallest sum of weights). The details of Dijkstra's algorithm goes below.
+
+![RELAX](./Dijkstra1.png)
+
+![Dijkstra](./Dijkstra2.png)
+
+### *A Toy Example*
+
+We used a toy example to test our implementation. We first attach router1 to router2 and router3 with weights 2 and 10, respectively. Then we attach router2 to router3 with weight 3 and run the `start` command for each router. After setting up the whole topology, we detect the most efficient path for different cases.
+
+![Toy](./toy2.png)
+
+#### Router1
+
+```bash
+>> java -cp target/COMP535-1.0-SNAPSHOT-jar-with-dependencies.jar socs.network.Main conf/router1.conf
+>> attach localhost 30001 192.168.1.100 2
+>> attach localhost 30002 192.168.2.1 10
+>> start
+>> detect 192.168.2.1
+```
+
+#### Router2
+
+```bash
+>> java -cp target/COMP535-1.0-SNAPSHOT-jar-with-dependencies.jar socs.network.Main conf/router2.conf
+>> attach localhost 30002 192.168.2.1 3
+>> start
+>> detect 192.168.2.1
+>> detect 192.168.1.1
+```
+
+#### Router3
+
+```bash
+>> java -cp target/COMP535-1.0-SNAPSHOT-jar-with-dependencies.jar socs.network.Main conf/router3.conf
+>> start
+>> detect 192.168.1.1
+```
+
+**The running results of the above toy example are shown below.**
+
+![Router1](./router11.png)
+
+![Router2](./router22.png)
+
+![Router3](./router33.png)
