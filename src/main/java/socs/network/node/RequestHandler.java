@@ -50,6 +50,14 @@ public class RequestHandler extends Thread{
                     else if (packet.sospfType == 1){
                         handleLSAUPDATE(packet, outputStream, inputStream);
                     }
+                    // If this is a connect packet
+                    else if (packet.sospfType == 2){
+                        handleConnect(packet, outputStream, inputStream);
+                    }
+                    // If this is a disconnect packet
+                    else if (packet.sospfType == 3){
+                        handleDisconnect(packet, outputStream, inputStream);
+                    }
                 }
             }
             else{
@@ -90,13 +98,13 @@ public class RequestHandler extends Thread{
         // reject the attach request if there's no more ports available
         if (available_port == -1){
             outputStream.writeObject("0");
-            System.out.println("The attach request is automatically rejected since no more port is available;");
+            System.out.println("The request is automatically rejected since no more port is available;");
             System.out.print(">> ");
         }
 
         if (router.signal == 1){
             outputStream.writeObject("1");
-            System.out.println("You accepted the attach request;");
+            System.out.println("You accepted the request;");
             System.out.print(">> ");
             // Add a link to the receiver router
             RouterDescription requestRd = new RouterDescription();
@@ -107,7 +115,7 @@ public class RequestHandler extends Thread{
         }
         else if (router.signal == 0){
             outputStream.writeObject("0");
-            System.out.println("You rejected the attach request;");
+            System.out.println("You rejected the request;");
             System.out.print(">> ");
         }
 
@@ -242,5 +250,119 @@ public class RequestHandler extends Thread{
                 }
             }
         }
+    }
+
+    private void handleConnect(SOSPFPacket packet, ObjectOutputStream outputStream, ObjectInputStream inputStream) throws IOException, ClassNotFoundException {
+        // check to make sure link doesnt already exist so that you dont add duplicates
+        String tempIP = packet.srcIP;
+        boolean exists = false;
+
+        int port = -1;
+
+        for (int i = 0; i < 4; i++) {
+            if (router.ports[i] != null && router.ports[i].router2.simulatedIPAddress.equals(tempIP)) {
+                exists = true;
+                port = i;
+                break;
+            }
+        }
+
+        //if the current link does not exist...
+        if (!exists) {
+
+            //find next available port
+            int available_port = -1;
+            for(int i = 0; i < 4; i ++){
+                if (router.ports[i] == null){
+                    available_port = i;
+                    break;
+                }
+            }
+
+            //no available ports, return error
+            if (available_port == -1) {
+                outputStream.writeObject("Error: All ports on the requested router are busy!");
+                // Close all the socket and streams
+                socket.close();
+                inputStream.close();
+                outputStream.close();
+                return;
+            }
+
+            //otherwise, create the new link
+            RouterDescription router2 = new RouterDescription();
+            router2.processIPAddress = packet.srcProcessIP;
+            router2.processPortNumber = packet.srcProcessPort;
+            router2.simulatedIPAddress = packet.srcIP;
+            router.ports[available_port] = new Link(router.rd, router2, packet.HelloWeight);
+            port = available_port;
+        }
+
+
+        //Change the status of the client router to INIT
+        router.ports[port].router2.status = RouterStatus.INIT;
+        router.ports[port].router1.status = RouterStatus.INIT;
+
+        //Create outgoing packet
+        SOSPFPacket newPacket = new SOSPFPacket();
+        newPacket.srcProcessIP = router.rd.processIPAddress;
+        newPacket.srcProcessPort = router.rd.processPortNumber;
+        newPacket.srcIP = router.rd.simulatedIPAddress;
+        newPacket.dstIP = router.ports[port].router2.simulatedIPAddress;
+        newPacket.sospfType = 2; // That is a CONNECT PACKET back
+        newPacket.routerID = newPacket.srcIP; // According to the explanation of TA on myCourses
+        newPacket.neighborID = newPacket.dstIP;
+        newPacket.HelloWeight = packet.HelloWeight;
+
+        outputStream.writeObject(newPacket);
+
+        //Wait for response
+        packet = (SOSPFPacket) inputStream.readObject();
+
+        //check to make sure the packet received was a HELLO
+        if (packet == null || packet.sospfType != 2) {
+
+            System.out.println("Error: did not receive a CONNECT back!");
+
+            // Close all the socket and streams
+            socket.close();
+            inputStream.close();
+            outputStream.close();
+            return;
+        }
+
+        router.ports[port].router2.status = RouterStatus.TWO_WAY;
+        router.ports[port].router1.status = RouterStatus.TWO_WAY;
+
+        //broadcast LSAUPDATE to neighbors
+        router.synchronize();
+
+        // Close all the socket and streams
+        socket.close();
+        inputStream.close();
+        outputStream.close();
+    }
+
+    private void handleDisconnect(SOSPFPacket packet, ObjectOutputStream outputStream, ObjectInputStream inputStream)
+            throws IOException {
+        //create the response packet
+        SOSPFPacket response = new SOSPFPacket();
+        response.srcProcessIP = router.rd.processIPAddress;
+        response.srcProcessPort = router.rd.processPortNumber;
+        response.srcIP = router.rd.simulatedIPAddress;
+        response.dstIP = packet.srcIP;
+        response.sospfType = 3; // That is a DISCONNECT PACKET
+        response.routerID = response.srcIP; // According to the explanation of TA on myCourses
+        response.neighborID = response.dstIP;
+
+        //send the response to the source so it can update it's link state database
+        outputStream.writeObject(response);
+
+        //proceed to update link state database
+        int port = router.getPort(packet.srcIP);
+
+        router.ports[port] = null;
+
+        router.synchronize();
     }
 }
