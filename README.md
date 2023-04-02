@@ -66,6 +66,9 @@ OS name: "mac os x", version: "13.2.1", arch: "x86_64", family: "mac"
 [INFO] Total time:  1.500 s
 [INFO] Finished at: 2023-03-05T21:04:53-05:00
 [INFO] ------------------------------------------------------------------------
+```
+
+```bash
 >> mvn compile assembly:single
 [INFO] Scanning for projects...
 [INFO]
@@ -131,6 +134,8 @@ OS name: "mac os x", version: "13.2.1", arch: "x86_64", family: "mac"
 [INFO] Finished at: 2023-03-05T21:09:22-05:00
 [INFO] ------------------------------------------------------------------------
 ```
+
+
 
 #### Run a router
 
@@ -283,3 +288,83 @@ We used a toy example to test our implementation. We first attach router1 to rou
 ![Router2](./router22.png)
 
 ![Router3](./router33.png)
+
+
+
+## Milestone 3
+
+### Implementation Choice
+
+#### *connect*
+
+Similar to the `attach`, the router to be connected can also manually input `Y/N` to accept or reject the `connect` request. Moreover, a  `connect` request will be automatically rejected if there's no port available.
+
+#### *disconnect*
+
+To use the disconnect command, the users are expected to input a port number. The router connected in this port will be disconnected from the current router. Whereas, since the port numbers are dynamically allocated during the attach or connect process, users are unable to know in which porter a given router is. Therefore, we design a new command `portInfo` by ourselves. This command will demonstrate the information of the routers connected in all ports.
+
+```bash
+>> portInfo
+The Router Connected in Port 0 is: 192.168.1.1
+The Router Connected in Port 1 is: None
+The Router Connected in Port 2 is: None
+The Router Connected in Port 3 is: None
+```
+
+#### *quit*
+
+We first check if there're any connected routers for this router. If not, we can quit directly. Otherwise, we should disconnect the current router to all of its connected routers and quit then.
+
+
+
+### *Toy Examples*
+
+We will use three examples here to demonstrate the new functionalities in Milestone3.
+
+#### *Ex1*
+
+##### Router1
+
+```bash
+>> java -cp target/COMP535-1.0-SNAPSHOT-jar-with-dependencies.jar socs.network.Main conf/router1.conf
+>> start
+>> connect localhost 30001 192.168.1.100 2
+>> detect 192.168.1.100
+>> portInfo
+>> disconnect 0
+>> portInfo
+>> detect 192.168.1.100
+>> quit
+```
+
+##### Router2
+
+```bash
+>> java -cp target/COMP535-1.0-SNAPSHOT-jar-with-dependencies.jar socs.network.Main conf/router2.conf
+>> start
+>> detect 192.168.1.1
+>> portInfo
+>> portInfo
+>> detect 192.168.1.1
+>> quit
+```
+
+**The running results of the above toy example are shown below.**
+
+![Router1](./M3_toy1_1.png)
+
+![Router1](./M3_toy1_2.png)
+
+
+
+TODO: (Assigned to Winston)
+
+1. Add examples with 4 and 6 routers, respectively.
+
+2. Include a figure to illustrate the toy example (Use Apple Freeform to draw).
+
+3. Add code block to demonstrate how to set up the toy example.
+
+   Add the code blocks below
+
+**The running results of the above toy example are shown below.**
