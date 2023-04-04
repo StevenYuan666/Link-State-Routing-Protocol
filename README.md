@@ -356,17 +356,114 @@ We will use three examples here to demonstrate the new functionalities in Milest
 ![Router1](./M3_toy1_2.png)
 
 
+#### *Ex2 with 4 Routers*
 
-TODO: (Assigned to Winston)
+##### Router1
 
-1. Add examples with 4 and 6 routers, respectively.
+```bash
+>> java -cp target/COMP535-1.0-SNAPSHOT-jar-with-dependencies.jar socs.network.Main conf/router1.conf
+>> start
+>> connect localhost 30001 192.168.1.100 2
+>> connect localhost 30003 192.168.3.1 7 
+>> connect localhost 30004 192.168.4.1 3
+>> detect 192.168.3.1
+>> portInfo
+>> disconnect 0
+>> detect 192.168.3.1
+>> quit
+```
 
-2. Include a figure to illustrate the toy example (Use Apple Freeform to draw).
+##### Router3
 
-3. Add code block to demonstrate how to set up the toy example.
+```bash
+>> java -cp target/COMP535-1.0-SNAPSHOT-jar-with-dependencies.jar socs.network.Main conf/router3.conf
+>> start
+>> quit
+```
 
-   Add the code blocks below
+##### Router4
 
-   hiiiiii
+```bash
+>> java -cp target/COMP535-1.0-SNAPSHOT-jar-with-dependencies.jar socs.network.Main conf/router4.conf
+>> start
+>> connect localhost 30004 192.168.4.1 3
+>> connect localhost 30002 192.168.2.1 3 
+>> quit
+```
+
+##### Router5
+
+```bash
+>> java -cp target/COMP535-1.0-SNAPSHOT-jar-with-dependencies.jar socs.network.Main conf/router5.conf
+>> start
+>> quit
+```
+
 
 **The running results of the above toy example are shown below.**
+![Example2Graph](./M3_toy2_Graph.png)
+![Example2](./M3_toy2.png)
+
+
+#### *Ex3 with 6 Routers*
+##### Router1
+
+```bash
+>> java -cp target/COMP535-1.0-SNAPSHOT-jar-with-dependencies.jar socs.network.Main conf/router1.conf
+>> start
+>> connect localhost 30001 192.168.1.100 1
+>> connect localhost 30004 192.168.4.1 4
+>> connect localhost 30002 192.169.2.1 3
+>> detect 192.168.3.1
+>> portInfo
+>> detect 192.168.3.1
+>> quit
+```
+##### Router2
+
+```bash
+>> java -cp target/COMP535-1.0-SNAPSHOT-jar-with-dependencies.jar socs.network.Main conf/router2.conf
+>> start
+>> connect localhost 30004 192.168.4.1 1
+>> connect localhost 30005 192.168.5.1 3
+>> quit
+```
+
+##### Router3
+
+```bash
+>> java -cp target/COMP535-1.0-SNAPSHOT-jar-with-dependencies.jar socs.network.Main conf/router3.conf
+>> start
+>> connect localhost 30003 192.168.3.1 3
+>> quit
+```
+##### Router4
+
+```bash
+>> java -cp target/COMP535-1.0-SNAPSHOT-jar-with-dependencies.jar socs.network.Main conf/router4.conf
+>> start
+>> connect localhost 30004 192.168.4.1 1
+>> connect localhost 30005 192.168.5.1 5
+>> quit
+```
+
+##### Router5
+
+```bash
+>> java -cp target/COMP535-1.0-SNAPSHOT-jar-with-dependencies.jar socs.network.Main conf/router5.conf
+>> start
+>> portInfo
+>> disconnect 1
+>> quit
+```
+
+##### Router6
+
+```bash
+>> java -cp target/COMP535-1.0-SNAPSHOT-jar-with-dependencies.jar socs.network.Main conf/router6.conf
+>> start
+>> quit
+```
+
+![Example3Graph](./M3_toy3_graph.png)
+![Example3](./M3_toy3.png)
